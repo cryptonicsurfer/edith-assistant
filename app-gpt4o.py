@@ -19,10 +19,20 @@ TAVILY_API_KEY = st.secrets["TAVILY_API_KEY"]
 # Add password from secrets
 PASSWORD = st.secrets["password"]
 
-# Login section
-enter_password = st.text_input("Enter your password here", type="password")
+# Check if the user is already logged in
+if "logged_in" not in st.session_state:
+    st.session_state.logged_in = False
 
-if enter_password == PASSWORD:
+# Login section
+if not st.session_state.logged_in:
+    enter_password = st.text_input("Enter your password here", type="password")
+    if enter_password == PASSWORD:
+        st.session_state.logged_in = True
+        st.experimental_rerun()  # Rerun the app to update the UI
+    elif enter_password:
+        st.error("Incorrect password. Please try again.")
+
+if st.session_state.logged_in:
     # Streamlit UI setup
     st.sidebar.header("Ediths AI assistent...")
     with st.sidebar:
@@ -341,21 +351,20 @@ if enter_password == PASSWORD:
                     st.image(image)
             st.session_state.image_urls = []
 
-    # Display DALL-E 3 generated images
+        # Display DALL-E 3 generated images
         if 'dalle_images' in st.session_state and st.session_state.dalle_images:
-            with st.expander('Se genererade bilder från DALL-E 3'):
-                for idx, image_info in enumerate(st.session_state.dalle_images):
-                    st.image(image_info["url"])
-                    st.caption(f"Genererad bild {idx + 1}: {image_info['prompt']}")
-                    
-                    # Add download button for each image
-                    response = requests.get(image_info["url"])
-                    st.download_button(
-                        label=f"Ladda ner bild {idx + 1}",
-                        data=response.content,
-                        file_name=f"edith_dalle_bild_{idx + 1}.png",
-                        mime="image/png"
-                    )
+            for idx, image_info in enumerate(st.session_state.dalle_images):
+                st.image(image_info["url"])
+                st.caption(f"Genererad bild {idx + 1}: {image_info['prompt']}")
+                
+                # Add download button for each image
+                response = requests.get(image_info["url"])
+                st.download_button(
+                    label=f"Ladda ner bild {idx + 1}",
+                    data=response.content,
+                    file_name=f"edith_dalle_bild_{idx + 1}.png",
+                    mime="image/png"
+                )
             
             # Clear the images after displaying
             st.session_state.dalle_images = []
